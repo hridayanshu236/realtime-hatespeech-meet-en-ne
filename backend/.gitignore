@@ -1,0 +1,38 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+.pytest_cache/
+
+# Large Data
+data/
+
+# Model Weights
+models/
+*.bin
+*.pt
+*.pth
+*.joblib
+*.zip
+*.onnx
+
+# Results & Logs
+logs/
+
+kaggle.json
+.ipynb_checkpoints/
+*.wav
+*.mp3
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
