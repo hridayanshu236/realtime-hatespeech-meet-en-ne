@@ -24,5 +24,10 @@
   ],
   "action": {
     "default_popup": "popup.html"
+  },
+  "offscreen": {
+    "page": "offscreen.html",
+    "reasons": ["AUDIO_CAPTURE"],
+    "justification": "Process tab audio for hate speech detection in the background."
   }
 }

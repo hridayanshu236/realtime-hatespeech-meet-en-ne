@@ -1,4 +1,4 @@
-// content.js — injected into meet.google.com
+// Injected into meet.google.com
 
 // CHAT WATCHER
 const BACKEND_URL = "http://localhost:8000";

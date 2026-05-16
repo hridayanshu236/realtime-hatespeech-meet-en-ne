@@ -1,4 +1,4 @@
-// offscreen.js — runs in a hidden page, has full Web Audio access
+// Runs in a hidden page, has full Web Audio access
 
 let audioContext, workletNode;
 const CHUNK_SECONDS = 4;

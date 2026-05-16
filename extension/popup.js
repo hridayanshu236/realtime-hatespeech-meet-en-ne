@@ -1,5 +1,3 @@
-// popup.js
-
 // State
 let isMonitoring = false;
 let chunkCount   = 0;
