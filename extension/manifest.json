@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Realtime Hate Speech Detector for Meet",
+  "version": "1.0",
+  "permissions": [
+    "tabCapture",
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "http://localhost:8000/*"   
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
