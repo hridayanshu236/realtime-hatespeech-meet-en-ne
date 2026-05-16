@@ -23,6 +23,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
   // When the worklet has a full 4-second chunk, send to backend
   workletNode.port.onmessage = async (e) => {
+    chrome.runtime.sendMessage({ action: "CHUNK_SENT" });
     const wavBlob = encodeToWAV(e.data.pcmBuffer, 16000);
     await sendAudioToBackend(wavBlob);
   };
@@ -32,20 +33,22 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
 async function sendAudioToBackend(wavBlob) {
   const formData = new FormData();
-  formData.append("audio", wavBlob, "chunk.wav");
+  formData.append("audio_file", wavBlob, "chunk.wav");
 
   try {
-    const res = await fetch(`${BACKEND_URL}/transcribe`, {
+    const res = await fetch(`${BACKEND_URL}/pipeline`, {
       method: "POST",
       body: formData
     });
-    const { transcript, language, is_harmful, label } = await res.json();
+    const data = await res.json();
 
-    if (is_harmful) {
+    if (data.any_flagged && data.audio_result && data.audio_result.flagged) {
       // Tell the content script to show a warning overlay
       chrome.runtime.sendMessage({
         action: "SHOW_ALERT",
-        transcript, language, label
+        transcript: data.audio_result.transcript,
+        language: data.audio_result.language,
+        label: data.audio_result.label
       });
     }
   } catch (err) {

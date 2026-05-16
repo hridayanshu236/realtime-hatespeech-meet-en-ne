@@ -81,6 +81,10 @@ function startMonitoring() {
       addLog("warn", "Failed to start: " + chrome.runtime.lastError.message);
       return;
     }
+    if (response && response.status === "error") {
+      addLog("warn", "Capture Error: " + response.error);
+      return;
+    }
     isMonitoring = true;
     chrome.storage.local.set({ isMonitoring: true });
     setMonitoringUI(true);
@@ -93,6 +97,9 @@ function stopMonitoring() {
     if (chrome.runtime.lastError) {
       addLog("warn", "Failed to stop: " + chrome.runtime.lastError.message);
       return;
+    }
+    if (response && response.status === "error") {
+      addLog("warn", "Stop Error: " + response.error);
     }
     isMonitoring = false;
     chrome.storage.local.set({ isMonitoring: false });
