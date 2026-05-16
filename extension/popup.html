@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MeetGuard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <style href="popup.css"></style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 2L3 5.5V9C3 12.08 5.6 14.97 9 16C12.4 14.97 15 12.08 15 9V5.5L9 2Z" fill="#0d0f12"/>
+        <path d="M7 9L8.5 10.5L11.5 7.5" stroke="#e8fc5a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>MeetGuard</h1>
+      <p>HATE SPEECH DETECTOR</p>
+    </div>
+    <span class="version-tag">v1.0</span>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <div class="status-text">
+      <div class="label">Monitor Status</div>
+      <div class="value inactive" id="statusValue">Inactive</div>
+    </div>
+  </div>
+
+  <div class="btn-wrap">
+    <button class="main-btn start" id="mainBtn" disabled>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+        <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" fill="none" id="btnIcon"/>
+        <polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor" id="btnPlay"/>
+      </svg>
+      <span id="btnLabel">Start Monitoring</span>
+    </button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Chunks Sent</div>
+      <div class="stat-value" id="chunkCount">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Flagged</div>
+      <div class="stat-value flagged" id="flagCount">0</div>
+    </div>
+  </div>
+
+  <div class="log-section">
+    <div class="log-header">
+      <span>Event Log</span>
+      <button class="clear-btn" id="clearLog">clear</button>
+    </div>
+    <div class="log-box" id="logBox">
+      <div class="log-empty" id="logEmpty">No events yet.</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="footer-note">© 2025 MeetGuard</span>
+    <div class="meet-indicator">
+      <div class="meet-dot" id="meetDot"></div>
+      <span class="meet-label" id="meetLabel">Not on Meet</span>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
