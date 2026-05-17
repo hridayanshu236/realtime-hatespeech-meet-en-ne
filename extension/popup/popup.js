@@ -1,196 +1,177 @@
-// State
+import { StatusBar }     from "./components/StatusBar.js";
+import { MainButton }    from "./components/MainButton.js";
+import { StatsPanel }    from "./components/StatsPanel.js";
+import { EventLog }      from "./components/EventLog.js";
+import { MeetIndicator } from "./components/MeetIndicator.js";
+import { BackendBadge }  from "./components/BackendBadge.js";
+
+//State
+
 let isMonitoring = false;
 let chunkCount   = 0;
 let flagCount    = 0;
-let isOnMeet     = false;
 
-// DOM refs
-const mainBtn     = document.getElementById("mainBtn");
-const btnLabel    = document.getElementById("btnLabel");
-const statusDot   = document.getElementById("statusDot");
-const statusValue = document.getElementById("statusValue");
-const chunkEl     = document.getElementById("chunkCount");
-const flagEl      = document.getElementById("flagCount");
-const logBox      = document.getElementById("logBox");
-const logEmpty    = document.getElementById("logEmpty");
-const clearLogBtn = document.getElementById("clearLog");
-const meetDot     = document.getElementById("meetDot");
-const meetLabel   = document.getElementById("meetLabel");
+//Component Instances
 
-// On popup open, restore state from chrome.storage and check active tab
+const statusBar = StatusBar({
+  dotEl:   document.getElementById("statusDot"),
+  valueEl: document.getElementById("statusValue"),
+});
+
+const mainBtn = MainButton({
+  btnEl:   document.getElementById("mainBtn"),
+  labelEl: document.getElementById("btnLabel"),
+});
+
+const stats = StatsPanel({
+  chunkEl: document.getElementById("chunkCount"),
+  flagEl:  document.getElementById("flagCount"),
+});
+
+const log = EventLog({
+  logBoxEl:   document.getElementById("logBox"),
+  logEmptyEl: document.getElementById("logEmpty"),
+  clearBtnEl: document.getElementById("clearLog"),
+});
+
+const meetIndicator = MeetIndicator({
+  dotEl:   document.getElementById("meetDot"),
+  labelEl: document.getElementById("meetLabel"),
+});
+
+const backendBadge = BackendBadge({
+  badgeEl:  document.getElementById("backendBadge"),
+  deviceEl: document.getElementById("backendDevice"),
+});
+
+//Boot 
+
 document.addEventListener("DOMContentLoaded", () => {
   restoreState();
   checkIfOnMeet();
 });
 
-// Restore persisted state (counts, monitoring flag, log entries)
 function restoreState() {
   chrome.storage.local.get(
-    ["isMonitoring", "chunkCount", "flagCount", "logEntries"],
+    ["isMonitoring", "chunkCount", "flagCount", "logEntries", "backendStatus"],
     (data) => {
       isMonitoring = data.isMonitoring ?? false;
       chunkCount   = data.chunkCount   ?? 0;
       flagCount    = data.flagCount    ?? 0;
 
-      chunkEl.textContent = chunkCount;
-      flagEl.textContent  = flagCount;
+      stats.setChunks(chunkCount);
+      stats.setFlags(flagCount);
+      log.restore(data.logEntries ?? []);
 
-      // Restore log
-      if (data.logEntries?.length) {
-        logEmpty.style.display = "none";
-        data.logEntries.forEach(entry => renderLogEntry(entry, false));
+      if (data.backendStatus) {
+        backendBadge.set(data.backendStatus.status, data.backendStatus.device);
       }
 
-      // Restore button/status UI
-      if (isMonitoring) setMonitoringUI(true);
+      if (isMonitoring) applyMonitoringUI(true);
     }
   );
 }
 
-// Check whether the currently active tab is a Google Meet session
 function checkIfOnMeet() {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const url = tabs[0]?.url ?? "";
-    isOnMeet = url.includes("meet.google.com");
+    const url    = tabs[0]?.url ?? "";
+    const onMeet = url.includes("meet.google.com");
 
-    meetDot.classList.toggle("on-meet", isOnMeet);
-    meetLabel.classList.toggle("on-meet", isOnMeet);
-    meetLabel.textContent = isOnMeet ? "On Meet" : "Not on Meet";
+    meetIndicator.setOnMeet(onMeet);
+    mainBtn.setEnabled(onMeet);
 
-    // Only enable the button when on a Meet tab
-    mainBtn.disabled = !isOnMeet;
-
-    if (!isOnMeet) {
-      addLog("warn", "No active Meet tab detected.");
-    }
+    if (!onMeet) log.addEntry("warn", "No active Meet tab detected.");
   });
 }
 
-// Button handler
-mainBtn.addEventListener("click", () => {
-  if (!isMonitoring) {
-    startMonitoring();
-  } else {
-    stopMonitoring();
-  }
+mainBtn.onClick(() => {
+  isMonitoring ? sendStop() : sendStart();
 });
 
-function startMonitoring() {
+function sendStart() {
+  mainBtn.setEnabled(false);
+
   chrome.runtime.sendMessage({ action: "START_CAPTURE" }, (response) => {
-    if (chrome.runtime.lastError) {
-      addLog("warn", "Failed to start: " + chrome.runtime.lastError.message);
+    mainBtn.setEnabled(true);
+
+    if (chrome.runtime.lastError || !response?.ok) {
+      const reason = response?.reason ?? chrome.runtime.lastError?.message ?? "unknown error";
+      log.addEntry("warn", "Failed to start: " + reason);
       return;
     }
-    if (response && response.status === "error") {
-      addLog("warn", "Capture Error: " + response.error);
-      return;
-    }
+
     isMonitoring = true;
     chrome.storage.local.set({ isMonitoring: true });
-    setMonitoringUI(true);
-    addLog("info", "Monitoring started.");
+    applyMonitoringUI(true);
+    log.addEntry("info", "Monitoring started.");
   });
 }
 
-function stopMonitoring() {
+function sendStop() {
+  mainBtn.setEnabled(false);
+
   chrome.runtime.sendMessage({ action: "STOP_CAPTURE" }, (response) => {
-    if (chrome.runtime.lastError) {
-      addLog("warn", "Failed to stop: " + chrome.runtime.lastError.message);
+    mainBtn.setEnabled(true);
+
+    if (chrome.runtime.lastError || !response?.ok) {
+      const reason = response?.reason ?? chrome.runtime.lastError?.message ?? "unknown error";
+      log.addEntry("warn", "Failed to stop: " + reason);
       return;
     }
-    if (response && response.status === "error") {
-      addLog("warn", "Stop Error: " + response.error);
-    }
+
     isMonitoring = false;
     chrome.storage.local.set({ isMonitoring: false });
-    setMonitoringUI(false);
-    addLog("info", "Monitoring stopped.");
+    applyMonitoringUI(false);
+    log.addEntry("info", "Monitoring stopped.");
   });
 }
 
-// UI state helpers
-function setMonitoringUI(active) {
-  if (active) {
-    mainBtn.className    = "main-btn stop";
-    btnLabel.textContent = "Stop Monitoring";
-    statusDot.classList.add("active");
-    statusValue.textContent = "Active";
-    statusValue.className   = "value active";
-  } else {
-    mainBtn.className    = "main-btn start";
-    btnLabel.textContent = "Start Monitoring";
-    statusDot.classList.remove("active");
-    statusValue.textContent = "Inactive";
-    statusValue.className   = "value inactive";
-  }
+function applyMonitoringUI(active) {
+  statusBar.setActive(active);
+  mainBtn.setActive(active);
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const onMeet = (tabs[0]?.url ?? "").includes("meet.google.com");
+    mainBtn.setEnabled(onMeet);
+  });
 }
 
-// Listen for messages from background.
-// background.js can push CHUNK_SENT and FLAG events to update the popup live
+// Live Messages from Background  
+
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.action === "CHUNK_SENT") {
     chunkCount++;
-    chunkEl.textContent = chunkCount;
+    stats.setChunks(chunkCount);
     chrome.storage.local.set({ chunkCount });
   }
 
   if (msg.action === "FLAG_DETECTED") {
     flagCount++;
-    flagEl.textContent = flagCount;
+    stats.setFlags(flagCount);
     chrome.storage.local.set({ flagCount });
-    const src  = msg.source   ?? "unknown";
-    const lang = msg.language ?? "?";
-    const lbl  = msg.label    ?? "harmful";
-    addLog("warn", `[${src}][${lang}] ${lbl}`);
+
+    const src  = msg.source     ?? "unknown";
+    const lang = msg.language   ?? "?";
+    const lbl  = msg.label      ?? "harmful";
+    const conf = msg.confidence != null ? ` (${Math.round(msg.confidence * 100)}%)` : "";
+    log.addEntry("warn", `[${src}][${lang}] ${lbl}${conf}`);
+  }
+
+  if (msg.action === "BACKEND_STATUS") {
+    backendBadge.set(msg.status, msg.device);
+    chrome.storage.local.set({
+      backendStatus: { status: msg.status, device: msg.device },
+    });
+    if (msg.status === "degraded") {
+      log.addEntry("warn", `Backend degraded — whisper:${msg.whisper} xlmr:${msg.xlmr}`);
+    } else {
+      log.addEntry("info", `Backend OK — device: ${msg.device}`);
+    }
   }
 
   if (msg.action === "CAPTURE_ERROR") {
-    addLog("warn", "Capture error: " + (msg.reason ?? "unknown"));
+    log.addEntry("warn", "Capture error: " + (msg.reason ?? "unknown"));
     isMonitoring = false;
-    setMonitoringUI(false);
+    applyMonitoringUI(false);
     chrome.storage.local.set({ isMonitoring: false });
   }
-});
-
-// Log helpers
-// Keeps a max of 50 entries in storage to avoid unbounded growth
-const MAX_LOG = 50;
-
-function addLog(type, message) {
-  const entry = {
-    type,
-    message,
-    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-  };
-
-  // Persist
-  chrome.storage.local.get(["logEntries"], (data) => {
-    const entries = data.logEntries ?? [];
-    entries.push(entry);
-    if (entries.length > MAX_LOG) entries.splice(0, entries.length - MAX_LOG);
-    chrome.storage.local.set({ logEntries: entries });
-  });
-
-  // Render immediately in the open popup
-  logEmpty.style.display = "none";
-  renderLogEntry(entry, true);
-}
-
-function renderLogEntry(entry, scrollToBottom) {
-  const el = document.createElement("div");
-  el.className = `log-entry ${entry.type}`;
-  el.innerHTML = `
-    <span class="log-time">${entry.time}</span>
-    <span class="log-msg">${entry.message}</span>
-  `;
-  logBox.appendChild(el);
-  if (scrollToBottom) logBox.scrollTop = logBox.scrollHeight;
-}
-
-// Clear log
-clearLogBtn.addEventListener("click", () => {
-  logBox.innerHTML = "";
-  logEmpty.style.display = "";
-  logBox.appendChild(logEmpty);
-  chrome.storage.local.set({ logEntries: [] });
 });

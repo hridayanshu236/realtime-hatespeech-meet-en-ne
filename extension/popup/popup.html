@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Realtime Hatespeech detector</title>
+  <title>Realtime Hatespeech Detector</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="popup.css" />
@@ -12,12 +12,17 @@
 
   <div class="header">
     <div class="header-text">
-      <h1>Realtime Hatespeech detector</h1>
+      <h1>Hatespeech Detector</h1>
+      <!-- Backend health badge — populated by BackendBadge component -->
+      <div class="header-meta">
+        <span class="backend-badge" id="backendBadge">—</span>
+        <span class="device-tag" id="backendDevice"></span>
+      </div>
     </div>
     <span class="version-tag">v1.0</span>
   </div>
 
-  <!-- Status -->
+  <!-- Monitor status -->
   <div class="status-bar">
     <div class="status-dot" id="statusDot"></div>
     <div class="status-text">
@@ -26,16 +31,18 @@
     </div>
   </div>
 
+  <!-- Start / Stop button -->
   <div class="btn-wrap">
     <button class="main-btn start" id="mainBtn" disabled>
       <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-        <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" fill="none" id="btnIcon"/>
-        <polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor" id="btnPlay"/>
+        <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor"/>
       </svg>
       <span id="btnLabel">Start Monitoring</span>
     </button>
   </div>
 
+  <!-- Stats -->
   <div class="stats">
     <div class="stat-card">
       <div class="stat-label">Chunks Sent</div>
@@ -47,6 +54,7 @@
     </div>
   </div>
 
+  <!-- Event log -->
   <div class="log-section">
     <div class="log-header">
       <span>Event Log</span>
@@ -57,14 +65,16 @@
     </div>
   </div>
 
+  <!-- Footer -->
   <div class="footer">
-    <span class="footer-note">© 2026 Realtime Hatespeech detector</span>
+    <span class="footer-note">© 2026 Hatespeech Detector</span>
     <div class="meet-indicator">
       <div class="meet-dot" id="meetDot"></div>
       <span class="meet-label" id="meetLabel">Not on Meet</span>
     </div>
   </div>
 
-  <script src="popup.js"></script>
+  <!-- type="module" required for ES import/export in component files -->
+  <script type="module" src="popup.js"></script>
 </body>
 </html>
