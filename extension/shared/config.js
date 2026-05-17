@@ -7,17 +7,17 @@ const CONFIG = {
 };
 
 const ACTIONS = {
-  // popup ↔ background
+  // popup  background
   START_CAPTURE:   "START_CAPTURE",
   STOP_CAPTURE:    "STOP_CAPTURE",
-  // background ↔ offscreen
+  // background  offscreen
   INIT_AUDIO:      "INIT_AUDIO",
   STOP_AUDIO:      "STOP_AUDIO",
-  // offscreen / content → background → popup
+  // offscreen / content  background  popup
   CHUNK_SENT:      "CHUNK_SENT",
   FLAG_DETECTED:   "FLAG_DETECTED",
   CAPTURE_ERROR:   "CAPTURE_ERROR",
   BACKEND_STATUS:  "BACKEND_STATUS",
-  // background → content script
+  // background  content script
   SHOW_ALERT:      "SHOW_ALERT",
 };
