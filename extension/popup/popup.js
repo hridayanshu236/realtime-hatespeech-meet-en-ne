@@ -135,7 +135,7 @@ function applyMonitoringUI(active) {
   });
 }
 
-// Live Messages from Background  
+// Live Messages from Background
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.action === "CHUNK_SENT") {

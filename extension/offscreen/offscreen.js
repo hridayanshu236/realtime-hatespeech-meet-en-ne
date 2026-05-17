@@ -2,7 +2,6 @@ let audioContext = null;
 let workletNode  = null;
 let mediaStream  = null;
 
-
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === ACTIONS.INIT_AUDIO) {
     initAudio(msg.streamId).catch((err) => {
@@ -52,7 +51,7 @@ async function initAudio(streamId) {
   };
 
   source.connect(workletNode);
- 
+  
 }
 
 function teardown() {
@@ -112,8 +111,6 @@ async function sendToPipeline(wavBlob) {
     console.error("[offscreen] /pipeline error:", err);
   }
 }
-// Wraps raw Float32 PCM samples in a standard WAV container.
-// Whisper (via the backend's save_temp_wav) expects 16-bit PCM WAV at 16 kHz.
 
 function encodeToWAV(float32Array, sampleRate) {
   const numChannels   = 1;

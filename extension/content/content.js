@@ -1,10 +1,5 @@
 const BACKEND_URL = "http://localhost:8000";
 
-// ─── Chat Observer ────────────────────────────────────────────────────────────
-// We try a ranked list of selectors because Meet's internal DOM changes
-// across versions. The observer re-probes on every mutation tick so it
-// survives the chat panel being opened and closed mid-meeting.
-
 const CHAT_SELECTORS = [
   '[data-message-id]',
   '[aria-label="Chat with everyone"]',
@@ -41,7 +36,6 @@ function startChatObserver() {
         if (text) classifyText(text);
       }
     }
-    // Re-probe in case the chat panel was toggled and the root node changed
     const newRoot = findChatRoot();
     if (newRoot && newRoot !== observedRoot) startChatObserver();
   });
@@ -50,11 +44,6 @@ function startChatObserver() {
 }
 
 startChatObserver();
-// Request:  { text: string, language?: string }
-// Response: { text, language, label, confidence, scores, flagged, status }
-//
-// Note: the response field is "flagged" (not "is_harmful").
-// We also pass language:"unknown" because Meet chat has no language metadata.
 
 async function classifyText(text) {
   try {
@@ -96,7 +85,7 @@ const OVERLAY_BASE_STYLE = `
   top: 16px;
   right: 16px;
   background: #1a0608;
-  border: 1.5px solid #cb46ff;
+  border: 1.5px solid #be46ff;
   color: #f5d0d3;
   padding: 12px 14px;
   border-radius: 10px;
@@ -132,7 +121,7 @@ function showOverlay(text, label, language, source, confidence) {
   header.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;";
 
   const title = document.createElement("strong");
-  title.style.color = "#dd46ff";
+  title.style.color = "#ff4655";
   title.textContent = "⚠️ Harmful Content Detected";
 
   const closeBtn = document.createElement("button");

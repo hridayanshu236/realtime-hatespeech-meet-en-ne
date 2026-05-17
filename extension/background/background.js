@@ -28,7 +28,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     broadcastToPopup(msg);
   }
 });
-
 async function startCapture(sendResponse) {
   if (capturing) {
     sendResponse({ ok: false, reason: "Already capturing." });
