@@ -26,6 +26,19 @@
     </div>
   </div>
 
+  <div class="setting-group">
+    <div class="setting-row">
+      <label for="modelSelect">Accuracy Mode:</label>
+      <select id="modelSelect">
+        <option value="medium">Accurate (Nepali - Default)</option>
+        <option value="small">Fast (English Only)</option>
+      </select>
+    </div>
+    <div class="setting-help" id="settingHelp">
+      <strong>Medium Model (1.5GB):</strong> Slower processing, but highly accurate for mixed Nepali/English speech. Requires 8GB+ RAM.
+    </div>
+  </div>
+
   <div class="btn-wrap">
     <button class="main-btn start" id="mainBtn" disabled>
       <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">

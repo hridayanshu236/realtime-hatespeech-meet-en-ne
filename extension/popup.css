@@ -138,7 +138,66 @@
     .status-text .value.inactive { color: var(--muted); }
 
     .btn-wrap {
-      padding: 14px 16px;
+      padding: 0 16px 14px;
+    }
+
+    .setting-group {
+      margin: 0 16px 14px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .setting-row label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .setting-row select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .setting-row select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .setting-help {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.4;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 6px 8px;
+      border-radius: 4px;
+      border-left: 2px solid var(--accent-dim);
+    }
+
+    .setting-help strong {
+      color: var(--text-dim);
     }
 
     .main-btn {

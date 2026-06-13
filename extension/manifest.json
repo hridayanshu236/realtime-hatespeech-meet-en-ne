@@ -28,7 +28,7 @@
   },
   "offscreen": {
     "page": "offscreen.html",
-    "reasons": ["AUDIO_CAPTURE"],
+    "reasons": ["USER_MEDIA"],
     "justification": "Process tab audio for hate speech detection in the background."
   }
 }

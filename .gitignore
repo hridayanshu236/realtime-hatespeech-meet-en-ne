@@ -1,0 +1,41 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+.pytest_cache/
+
+# Large Data & Audio
+data/
+debug_audio/
+*.wav
+*.mp3
+
+# Model Weights (CRITICAL TO IGNORE)
+models/
+*.bin
+*.pt
+*.pth
+*.joblib
+*.zip
+*.onnx
+
+# Results & Logs
+logs/
+*.log
+
+# Jupyter Notebook Artifacts
+.ipynb_checkpoints/
+kaggle.json
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

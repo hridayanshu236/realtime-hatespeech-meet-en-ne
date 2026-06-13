@@ -10,7 +10,7 @@ logger = logging.getLogger("inference_engine")
 LABEL_MAP = {0: "clean", 1: "offensive", 2: "hate_speech"}
 
 def run_transcription(whisper_model, audio_path: str):
-    """Executes transcription on a WAV file. Falls back to mock if model is None."""
+    """Executes transcription on a WAV file using faster-whisper. Falls back to mock if model is None."""
     if whisper_model is None:
         return {
             "transcript": "[MOCK] This is a simulated transcript because Whisper is not loaded.",
@@ -18,23 +18,46 @@ def run_transcription(whisper_model, audio_path: str):
             "segments": [{"start": 0.0, "end": 4.0, "text": "Simulated audio content."}]
         }
     
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    result = whisper_model.transcribe(audio_path, fp16=(device == "cuda"))
+    # Use a hardcoded initial prompt to help faster-whisper expect Nepali/English mixes
+    initial_prompt = "नमस्ते, good morning everyone."
+    
+    # faster-whisper API: transcribe() returns (segments_generator, info)
+    # VAD filter removes silent parts, greatly reducing hallucinations on empty chunks
+    segments_gen, info = whisper_model.transcribe(
+        audio_path,
+        initial_prompt=initial_prompt,
+        beam_size=5,                       # Beam_size=5 is fast in faster-whisper (CTranslate2)
+        condition_on_previous_text=False,  # Prevents hallucination loops in 5-second chunks
+        vad_filter=True,                   # Voice Activity Detection: skips silent chunks instantly
+        vad_parameters=dict(min_silence_duration_ms=500)
+    )
+    
+    # Must consume the generator to get results
+    segments = []
+    full_text_parts = []
+    for seg in segments_gen:
+        segments.append({"start": seg.start, "end": seg.end, "text": seg.text.strip()})
+        full_text_parts.append(seg.text.strip())
+    
+    full_text = " ".join(full_text_parts).strip()
+    detected_lang = info.language if info else "unknown"
     
     return {
-        "transcript": result.get("text", "").strip(),
-        "language": result.get("language", "unknown"),
-        "segments": [
-            {"start": s["start"], "end": s["end"], "text": s["text"].strip()} 
-            for s in result.get("segments", [])
-        ]
+        "transcript": full_text,
+        "language": detected_lang,
+        "segments": segments
     }
 
-def run_classification(model, tokenizer, text: str, device):
+def run_classification(model, tokenizer, text: str, language: str, device, thresholds: dict = None):
     """
     Executes XLM-RoBERTa classification. 
     If model/tokenizer is None, falls back to Mock Keyword-based logic.
     """
+    if thresholds is None:
+        thresholds = {}
+        
+    # Get the language-specific threshold, default to 0.5 if language is unknown
+    threshold = thresholds.get(language, 0.5)
     # --- MOCK FALLBACK ---
     if model is None or tokenizer is None:
         text_lower = text.lower()
@@ -97,13 +120,10 @@ def run_classification(model, tokenizer, text: str, device):
     # If it's multi-label, logits usually go through Sigmoid, not Softmax
     if hasattr(model.config, "problem_type") and model.config.problem_type == "multi_label_classification":
         probs = torch.sigmoid(logits).squeeze()
-        # Aggregation: If any toxic label (1-4) is > 0.5, it's harmful
-        # Standard Jigsaw: 0:toxic, 1:severe, 2:obscene, 3:threat, 4:insult
         toxic_probs = probs[0:] 
         max_toxic_score = float(torch.max(toxic_probs).item())
         
-        if max_toxic_score > 0.5:
-            # Pick the most confident toxic label
+        if max_toxic_score > threshold:
             pred_idx = int(torch.argmax(toxic_probs).item())
             label = friendly_map.get(str(pred_idx), "hate_speech")
         else:
@@ -115,6 +135,26 @@ def run_classification(model, tokenizer, text: str, device):
         pred_idx = int(torch.argmax(probs).item())
         label = str(model.config.id2label.get(pred_idx, pred_idx)).lower().replace("label_", "").strip()
         label = friendly_map.get(label, f"unknown_{label}")
+        
+        # Override the argmax decision if the harmful probability exceeds our custom threshold
+        # We assume label "0" or "clean" is at index 0. So harmful prob is 1.0 - P(clean)
+        # If the model uses a different index for clean, this might need tuning.
+        clean_idx = 0
+        for i, l in model.config.id2label.items():
+            if friendly_map.get(str(l).lower().replace("label_", "").strip(), "unknown") == "clean":
+                clean_idx = i
+                break
+                
+        if probs.dim() > 0:
+            harmful_prob = 1.0 - probs[clean_idx].item()
+            if harmful_prob > threshold:
+                # Force it to be harmful if it exceeds the custom threshold
+                if label == "clean":
+                    # If argmax was clean but it passed threshold, label it offensive
+                    label = "offensive" 
+            else:
+                label = "clean"
+                
         confidence = float(torch.max(probs).item())
 
     # Build probability scores dict for the API response

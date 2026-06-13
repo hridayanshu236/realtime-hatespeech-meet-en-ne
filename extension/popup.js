@@ -16,6 +16,8 @@ const logEmpty    = document.getElementById("logEmpty");
 const clearLogBtn = document.getElementById("clearLog");
 const meetDot     = document.getElementById("meetDot");
 const meetLabel   = document.getElementById("meetLabel");
+const modelSelect = document.getElementById("modelSelect");
+const settingHelp = document.getElementById("settingHelp");
 
 // On popup open, restore state from chrome.storage and check active tab
 document.addEventListener("DOMContentLoaded", () => {
@@ -39,6 +41,14 @@ function restoreState() {
       if (data.logEntries?.length) {
         logEmpty.style.display = "none";
         data.logEntries.forEach(entry => renderLogEntry(entry, false));
+      }
+
+      // Restore dropdown state
+      if (data.modelSize) {
+        modelSelect.value = data.modelSize;
+        updateHelpText(data.modelSize);
+      } else {
+        updateHelpText("medium");
       }
 
       // Restore button/status UI
@@ -74,6 +84,50 @@ mainBtn.addEventListener("click", () => {
     stopMonitoring();
   }
 });
+
+// Dropdown handler
+modelSelect.addEventListener("change", async (e) => {
+  const newSize = e.target.value;
+  modelSelect.disabled = true;
+  mainBtn.disabled = true;
+  updateHelpText(newSize);
+  addLog("info", `Changing model to '${newSize}'. Please wait...`);
+
+  try {
+    const res = await fetch("http://localhost:8000/config/whisper", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ size: newSize })
+    });
+    
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.detail || "Unknown API Error");
+    }
+    
+    addLog("info", `Successfully loaded '${newSize}' model!`);
+    chrome.storage.local.set({ modelSize: newSize });
+  } catch (err) {
+    addLog("warn", "Failed to change model: " + err.message);
+    // Revert select on error
+    chrome.storage.local.get(["modelSize"], (data) => {
+      const reverted = data.modelSize || "medium";
+      modelSelect.value = reverted;
+      updateHelpText(reverted);
+    });
+  } finally {
+    modelSelect.disabled = false;
+    mainBtn.disabled = !isOnMeet;
+  }
+});
+
+function updateHelpText(size) {
+  if (size === "medium") {
+    settingHelp.innerHTML = "<strong>Medium Model (1.5GB):</strong> Slower processing, but highly accurate for mixed Nepali/English speech. Requires 8GB+ RAM.";
+  } else {
+    settingHelp.innerHTML = "<strong>Small Model (460MB):</strong> Extremely fast and lightweight. Good for pure English, but struggles with Nepali.";
+  }
+}
 
 function startMonitoring() {
   chrome.runtime.sendMessage({ action: "START_CAPTURE" }, (response) => {

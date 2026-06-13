@@ -1,3 +1,4 @@
+import os
 import torch
 import logging
 from contextlib import asynccontextmanager
@@ -5,8 +6,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.model_loader import load_whisper, load_xlmroberta
-from app.routers import transcribe, classify, pipeline, health
+from app.model_loader import load_whisper, load_xlmroberta, load_thresholds
+from app.routers import transcribe, classify, pipeline, health, config
 from app.utils import get_device
 
 # Configure logging
@@ -25,11 +26,16 @@ async def lifespan(app: FastAPI):
     app.state.device = device
     
     try:
+        # Set default Whisper model size
+        whisper_size = "medium"
+        
         # Load Models
-        app.state.whisper_model = load_whisper("small")
+        app.state.whisper_model = load_whisper(whisper_size)
         xlmr_model, xlmr_tokenizer = load_xlmroberta()
         app.state.xlmr_model = xlmr_model
         app.state.xlmr_tokenizer = xlmr_tokenizer
+        app.state.thresholds = load_thresholds()
+        
         logger.info("All models loaded successfully.")
     except Exception as e:
         logger.error(f"Critical failure during model loading: {e}")
@@ -79,6 +85,7 @@ app.include_router(transcribe.router)
 app.include_router(classify.router)
 app.include_router(pipeline.router)
 app.include_router(health.router)
+app.include_router(config.router)
 
 @app.get("/")
 async def root():
