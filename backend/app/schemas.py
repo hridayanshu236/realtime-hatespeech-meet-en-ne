@@ -37,3 +37,6 @@ class HealthResponse(BaseModel):
     xlmr_loaded: bool
     device: str
     version: str
+
+class WhisperConfigRequest(BaseModel):
+    size: str = Field(..., description="The Whisper model size (e.g., 'small', 'medium')")

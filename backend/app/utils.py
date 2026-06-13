@@ -52,3 +52,32 @@ def log_flagged_event(text: str, label: str, confidence: float, language: str, s
             f.write(json.dumps(event, ensure_ascii=False) + "\n")
     except Exception as e:
         logger.error(f"Failed to log flagged event: {e}")
+
+def detect_language(text: str) -> str:
+    """
+    Fast character-level language/script detection.
+    Ported from realtime-hatespeech-meet-en-ne-v2.ipynb.
+    Handles Devanagari script AND Romanized Nepali markers.
+    Returns: 'ne' (Nepali), 'cs' (code-switched), or 'en' (English).
+    """
+    if not text:
+        return "en"
+        
+    dev = sum(1 for c in text if '\u0900' <= c <= '\u097F')
+    lat = sum(1 for c in text if c.isascii() and c.isalpha())
+    
+    if dev > 0 and lat > 0:
+        return "cs"
+    elif dev > lat:
+        return "ne"
+    else:
+        # Check for Romanized Nepali markers
+        t = text.lower()
+        ne_markers = ["bro", "yaar", "ni", "ta", "ko", "ma", "le", "lai",
+                      "cha", "chha", "ho", "gara", "garnu", "kasto", "aaja"]
+        
+        # Pad text with spaces for accurate word matching
+        padded_t = f" {t} "
+        ne_hits = sum(1 for w in ne_markers if f" {w} " in padded_t)
+        
+        return "cs" if ne_hits >= 2 else "en"

@@ -128,7 +128,8 @@ async function classifyText(text) {
     const res = await fetch(`${BACKEND_URL}/classify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
+      // Send as "en" by default, the backend will auto-detect Romanized/Devanagari Nepali
+      body: JSON.stringify({ text, language: "en" })
     });
     const data = await res.json();
     console.log("[HateSpeech] /classify response:", data);

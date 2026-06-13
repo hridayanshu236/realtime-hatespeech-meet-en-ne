@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Form, Request, HTTPException
 from typing import Optional
 from app.schemas import PipelineResponse, ClassifyResponse
-from app.utils import save_temp_wav, delete_file, log_flagged_event
+from app.utils import save_temp_wav, delete_file, log_flagged_event, detect_language
 from app.inference import run_transcription, run_classification
 
 router = APIRouter(tags=["Pipeline"])
@@ -31,13 +31,6 @@ async def unified_pipeline(
             if len(audio_bytes) > 0:
                 temp_path = save_temp_wav(audio_bytes)
                 
-                # --- DEBUG: Save a copy to debug_audio folder ---
-                import os, shutil
-                debug_dir = "debug_audio"
-                os.makedirs(debug_dir, exist_ok=True)
-                shutil.copy(temp_path, os.path.join(debug_dir, os.path.basename(temp_path)))
-                # ------------------------------------------------
-                
                 # Transcribe
                 whisper_model = request.app.state.whisper_model
                 trans_res = run_transcription(whisper_model, temp_path)
@@ -46,8 +39,16 @@ async def unified_pipeline(
                 model = request.app.state.xlmr_model
                 tokenizer = request.app.state.xlmr_tokenizer
                 device = request.app.state.device
+                thresholds = getattr(request.app.state, "thresholds", {})
                 
-                class_res = run_classification(model, tokenizer, trans_res["transcript"], device)
+                class_res = run_classification(
+                    model, 
+                    tokenizer, 
+                    trans_res["transcript"], 
+                    trans_res["language"], 
+                    device, 
+                    thresholds
+                )
                 
                 audio_result = {
                     "transcript": trans_res["transcript"],
@@ -75,12 +76,16 @@ async def unified_pipeline(
         model = request.app.state.xlmr_model
         tokenizer = request.app.state.xlmr_tokenizer
         device = request.app.state.device
+        thresholds = getattr(request.app.state, "thresholds", {})
         
-        class_res = run_classification(model, tokenizer, chat_text, device)
+        # Auto-detect language
+        detected_lang = detect_language(chat_text)
+        
+        class_res = run_classification(model, tokenizer, chat_text, detected_lang, device, thresholds)
         
         chat_result = ClassifyResponse(
             text=chat_text,
-            language="unknown",
+            language=detected_lang,
             label=class_res["label"],
             confidence=class_res["confidence"],
             scores=class_res["scores"],
@@ -93,7 +98,7 @@ async def unified_pipeline(
                 text=chat_text,
                 label=class_res["label"],
                 confidence=class_res["confidence"],
-                language="unknown",
+                language=detected_lang,
                 source="chat"
             )
 
