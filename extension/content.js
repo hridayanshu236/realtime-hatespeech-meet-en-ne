@@ -149,6 +149,9 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (msg.action === "SHOW_ALERT") {
     showOverlay(msg.transcript, msg.label, msg.language, "audio");
   }
+  if (msg.action === "PIPELINE_LOG") {
+    console.log("[HateSpeech Audio] /pipeline response:", msg.data);
+  }
 });
 
 // OVERLAY UI
@@ -176,9 +179,13 @@ function showOverlay(text, label, language, source) {
     <strong>⚠️ Harmful Content Detected</strong><br/>
     <small>Source: ${source} | Language: ${language} | Label: ${label}</small><br/>
     <em style="font-size:12px">"${text.slice(0, 80)}${text.length > 80 ? "…" : ""}"</em>
-    <button onclick="this.parentElement.remove()" 
-      style="float:right;background:transparent;border:none;color:white;cursor:pointer;font-size:16px">✕</button>
+    <button style="float:right;background:transparent;border:none;color:white;cursor:pointer;font-size:16px">✕</button>
   `;
+
+  const btn = overlay.querySelector("button");
+  if (btn) {
+    btn.addEventListener("click", () => overlay.remove());
+  }
 
   document.body.appendChild(overlay);
   setTimeout(() => overlay.remove(), 8000); // auto-dismiss after 8s

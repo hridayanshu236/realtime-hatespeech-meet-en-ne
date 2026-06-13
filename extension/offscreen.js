@@ -4,12 +4,22 @@ let audioContext, workletNode;
 const CHUNK_SECONDS = 4;
 const BACKEND_URL = "http://localhost:8000";
 
-chrome.runtime.onMessage.addListener(async (msg) => {
-  if (msg.action !== "INIT_AUDIO") return;
+async function init() {
+  const params = new URLSearchParams(location.search);
+  const streamId = params.get("streamId");
+  if (!streamId) {
+    console.error("No streamId provided in URL query parameters");
+    return;
+  }
 
   // Reconstruct the MediaStream from the tab capture stream ID
   const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { mandatory: { chromeMediaSource: "tab", chromeMediaSourceId: msg.streamId } }
+    audio: {
+      mandatory: {
+        chromeMediaSource: "tab",
+        chromeMediaSourceId: streamId
+      }
+    }
   });
 
   audioContext = new AudioContext({ sampleRate: 16000 }); // Whisper expects 16kHz
@@ -29,6 +39,11 @@ chrome.runtime.onMessage.addListener(async (msg) => {
   };
 
   source.connect(workletNode);
+  source.connect(audioContext.destination); // Route audio to speakers so user can still hear the meeting
+}
+
+init().catch(err => {
+  console.error("Initialization failed:", err);
 });
 
 async function sendAudioToBackend(wavBlob) {
@@ -41,6 +56,9 @@ async function sendAudioToBackend(wavBlob) {
       body: formData
     });
     const data = await res.json();
+    
+    // Relay log to content script so user can see it in Meet DevTools
+    chrome.runtime.sendMessage({ action: "PIPELINE_LOG", data: data });
 
     if (data.any_flagged && data.audio_result && data.audio_result.flagged) {
       // Tell the content script to show a warning overlay

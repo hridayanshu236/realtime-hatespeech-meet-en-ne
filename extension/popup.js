@@ -137,11 +137,16 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (msg.action === "FLAG_DETECTED") {
     flagCount++;
     flagEl.textContent = flagCount;
-    chrome.storage.local.set({ flagCount });
     const src  = msg.source   ?? "unknown";
     const lang = msg.language ?? "?";
     const lbl  = msg.label    ?? "harmful";
-    addLog("warn", `[${src}][${lang}] ${lbl}`);
+    const entry = {
+      type: "warn",
+      message: `[${src}][${lang}] ${lbl}`,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    };
+    logEmpty.style.display = "none";
+    renderLogEntry(entry, true);
   }
 
   if (msg.action === "CAPTURE_ERROR") {
