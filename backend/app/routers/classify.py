@@ -6,7 +6,7 @@ from app.utils import log_flagged_event, detect_language
 router = APIRouter(tags=["Classification"])
 
 @router.post("/classify", response_model=ClassifyResponse)
-async def classify_text(request: Request, payload: ClassifyRequest):
+def classify_text(request: Request, payload: ClassifyRequest):
     """
     Classifies raw text for hate speech or profanity using XLM-RoBERTa.
     """

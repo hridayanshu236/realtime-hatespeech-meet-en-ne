@@ -3,6 +3,7 @@ from typing import Optional
 from app.schemas import PipelineResponse, ClassifyResponse
 from app.utils import save_temp_wav, delete_file, log_flagged_event, detect_language
 from app.inference import run_transcription, run_classification
+from fastapi.concurrency import run_in_threadpool
 
 router = APIRouter(tags=["Pipeline"])
 
@@ -33,7 +34,7 @@ async def unified_pipeline(
                 
                 # Transcribe
                 whisper_model = request.app.state.whisper_model
-                trans_res = run_transcription(whisper_model, temp_path)
+                trans_res = await run_in_threadpool(run_transcription, whisper_model, temp_path)
                 
                 # Classify transcript
                 model = request.app.state.xlmr_model
@@ -41,7 +42,8 @@ async def unified_pipeline(
                 device = request.app.state.device
                 thresholds = getattr(request.app.state, "thresholds", {})
                 
-                class_res = run_classification(
+                class_res = await run_in_threadpool(
+                    run_classification,
                     model, 
                     tokenizer, 
                     trans_res["transcript"], 
@@ -81,7 +83,7 @@ async def unified_pipeline(
         # Auto-detect language
         detected_lang = detect_language(chat_text)
         
-        class_res = run_classification(model, tokenizer, chat_text, detected_lang, device, thresholds)
+        class_res = await run_in_threadpool(run_classification, model, tokenizer, chat_text, detected_lang, device, thresholds)
         
         chat_result = ClassifyResponse(
             text=chat_text,
