@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Realtime Hate Speech Detector for Meet",
+  "version": "1.0",
+  "permissions": [
+    "tabCapture",
+    "activeTab",
+    "scripting",
+    "storage",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "http://localhost:8000/*"   
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "offscreen": {
+    "page": "offscreen.html",
+    "reasons": ["AUDIO_CAPTURE"],
+    "justification": "Process tab audio for hate speech detection in the background."
+  }
+}

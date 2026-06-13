@@ -21,6 +21,7 @@ models/
 
 # Results & Logs
 logs/
+debug_audio/
 
 kaggle.json
 .ipynb_checkpoints/

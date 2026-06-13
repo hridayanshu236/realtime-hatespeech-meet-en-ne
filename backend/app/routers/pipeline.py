@@ -31,6 +31,13 @@ async def unified_pipeline(
             if len(audio_bytes) > 0:
                 temp_path = save_temp_wav(audio_bytes)
                 
+                # --- DEBUG: Save a copy to debug_audio folder ---
+                import os, shutil
+                debug_dir = "debug_audio"
+                os.makedirs(debug_dir, exist_ok=True)
+                shutil.copy(temp_path, os.path.join(debug_dir, os.path.basename(temp_path)))
+                # ------------------------------------------------
+                
                 # Transcribe
                 whisper_model = request.app.state.whisper_model
                 trans_res = run_transcription(whisper_model, temp_path)
