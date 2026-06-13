@@ -24,19 +24,12 @@ A full-stack, real-time hate speech detection system built specifically for Goog
 ### 1. Start the Backend
 You must have Python 3.10+ installed.
 
-First, download the fine-tuned Hate Speech model:
-```bash
-cd backend
-pip install -r requirements.txt
-# Make sure to edit download_model.py and put your Google Drive File ID first!
-python download_model.py
-```
+1. Open the `backend` folder.
+2. Double-click the **`start_backend.bat`** file.
 
-Then, run the server:
-```bash
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-*Note: The first run will automatically download the `faster-whisper` medium model weights (~1.5GB).*
+*That's it! The script will automatically create a virtual environment, install the required packages, download the fine-tuned Hate Speech model from Google Drive, and start the FastAPI server.*
+
+*Note: The first run will also automatically download the `faster-whisper` medium model weights natively (~1.5GB).*
 
 ### 2. Install the Chrome Extension
 1. Open Google Chrome and navigate to `chrome://extensions/`.
