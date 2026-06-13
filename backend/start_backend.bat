@@ -28,7 +28,7 @@ python -m pip install --upgrade pip >nul
 pip install -r requirements.txt
 
 :: Check if model exists, download if it doesn't
-IF NOT EXIST "models\xlmroberta_finetuned\pytorch_model.bin" (
+IF NOT EXIST "models\xlmroberta_finetuned\config.json" (
     echo [INFO] Hate speech model not found locally. Starting download...
     python download_model.py
 ) ELSE (
