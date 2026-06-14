@@ -16,7 +16,7 @@ def download_and_extract_model():
     import gdown
 
     # The actual Google Drive file ID of the zipped model
-    FILE_ID = "1f8TaHFdRSGQAbdjoGxKzHwpmUNVFYaMw"
+    FILE_ID = "15JHFlitkOxKrFy1ePdoJHWuZ4oCGd3aK"
 
     url = f"https://drive.google.com/uc?id={FILE_ID}"
     output_zip = "model_temp.zip"
